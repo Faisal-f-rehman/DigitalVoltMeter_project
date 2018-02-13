@@ -1,0 +1,38 @@
+library ieee; 
+use ieee.std_logic_1164.all; 
+use ieee.numeric_std.all; 
+
+entity clock_div_16bit is 
+generic (init_s : unsigned := UNSIGNED'("0000000000000000")); 
+port 
+	( 
+	clk : in std_ulogic; 
+	reset : in std_ulogic; 
+	count : out std_ulogic_vector(15 downto 0); 
+	rco : out std_ulogic 
+	); 
+end entity clock_div_16bit; 
+
+architecture div16 of clock_div_16bit is 
+begin 
+	p0: process (clk, reset) is -- sensitivity list 
+		variable k : unsigned(15 downto 0); -- counter state variable (not port) 
+		variable s : unsigned(0 downto 0); -- clock state - single bit variable in this case 
+		begin 
+			if reset = '1' then --asychronous reset 
+				k := init_s; --set initial value 
+				s := "0"; 
+				rco <= '0'; 
+				
+			elsif rising_edge(clk) then 
+				if (k = "1111111111111111") then --detected reaching last state 
+					k := init_s; 
+					s := not s; --toggle clock state 
+					rco <= std_ulogic_vector(s)(0); --map clock state to output 
+				else 
+				k := k + 1; --increment counter 
+				end if; 
+			end if; 
+		count <= std_ulogic_vector(k); --map counter state to outputs 
+	end process p0; 
+end architecture div16; 
